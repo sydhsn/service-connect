@@ -1,46 +1,114 @@
-import {View, Text, Image, TouchableOpacity, ScrollView} from 'react-native';
-import React from 'react';
-import {styles} from '../styles';
+import React, {useState} from 'react';
+import {View, Text, Alert, Keyboard, SafeAreaView} from 'react-native';
 import {COLORS} from '../constants';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
-const LoginScreen = ({navigation}: any) => {
+import Loader from '../components/common/Loader';
+import auth from '@react-native-firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+interface UserData {
+  email: string;
+  password: string;
+  loggedIn: boolean;
+}
+
+interface InputErrors {
+  email?: string | undefined;
+  password?: string | undefined;
+}
+
+const LoginScreen: React.FC<{navigation: any}> = ({navigation}) => {
+  const [inputs, setInputs] = useState<{email: string; password: string}>({
+    email: '',
+    password: '',
+  });
+  const [errors, setErrors] = useState<InputErrors>({});
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const validate = async () => {
+    Keyboard.dismiss();
+    let isValid = true;
+    if (!inputs.email) {
+      handleError('Please input email', 'email');
+      isValid = false;
+    }
+    if (!inputs.password) {
+      handleError('Please input password', 'password');
+      isValid = false;
+    }
+    if (isValid) {
+      login();
+    }
+  };
+
+  const login = () => {
+    setLoading(true);
+    setTimeout(async () => {
+      setLoading(false);
+      try {
+        await auth().signInWithEmailAndPassword(inputs.email, inputs.password);
+        AsyncStorage.setItem(
+          'userData',
+          JSON.stringify({...inputs, loggedIn: true}),
+        );
+        navigation.navigate('Home');
+      } catch (err: any) {
+        Alert.alert('Error', err.message);
+      }
+    }, 3000);
+  };
+
+  const handleOnchange = (text: string, input: string) => {
+    setInputs(prevState => ({...prevState, [input]: text}));
+  };
+
+  const handleError = (error: string | null, input: string) => {
+    setErrors(prevState => ({...prevState, [input]: error}));
+  };
+
   return (
-    <ScrollView style={styles.app}>
-      <View style={styles.container}>
-        <View style={styles.loginContainer}>
-          <Image
-            source={require('../assets/images/shape.png')}
-            style={styles.loginImageTop}
+    <SafeAreaView style={{backgroundColor: COLORS.white, flex: 1}}>
+      <Loader visible={loading} />
+      <View style={{paddingTop: 50, paddingHorizontal: 20}}>
+        <Text style={{color: COLORS.black, fontSize: 40, fontWeight: 'bold'}}>
+          Log In
+        </Text>
+        <Text style={{color: COLORS.grey, fontSize: 18, marginVertical: 10}}>
+          Enter Your Details to Login
+        </Text>
+        <View style={{marginVertical: 20}}>
+          <Input
+            onChangeText={text => handleOnchange(text, 'email')}
+            onFocus={() => handleError(null, 'email')}
+            iconName="email-outline"
+            label="Email"
+            placeholder="Enter your email address"
+            error={errors.email}
           />
-        </View>
-        <View style={styles.textContainer}>
-          <Text style={styles.loginTitleText}>Welcome back</Text>
-        </View>
-        <View style={styles.logoConatiner}>
-          <Image
-            source={require('../assets/images/logo.png')}
-            style={styles.logo}
+          <Input
+            onChangeText={text => handleOnchange(text, 'password')}
+            onFocus={() => handleError(null, 'password')}
+            iconName="lock-outline"
+            label="Password"
+            placeholder="Enter your password"
+            error={errors.password}
+            password
           />
-        </View>
-        <View style={styles.inputTextContainer}>
-          <Input placeholder="Email" icon="user" />
-          <Input placeholder="Password" icon="lock" secureTextEntry />
-        </View>
-        <Button title={'Login'} onPress={() => {}} />
-        <TouchableOpacity onPress={() => console.log('Forgot password')}>
-          <Text style={{color: COLORS.primary, marginBottom: 10}}>
-            Forgot Password?
+          <Button title="Log In" onPress={validate} />
+          <Text
+            onPress={() => navigation.navigate('Register')}
+            style={{
+              color: COLORS.black,
+              fontWeight: 'bold',
+              textAlign: 'center',
+              fontSize: 16,
+            }}>
+            Don't have account ?Register
           </Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-          <Text style={{marginTop: 10}}>
-            Don't have an account?{' '}
-            <Text style={{color: COLORS.primary}}>Register</Text>
-          </Text>
-        </TouchableOpacity>
+        </View>
       </View>
-    </ScrollView>
+    </SafeAreaView>
   );
 };
 

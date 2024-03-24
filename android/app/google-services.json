@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "233531602498",
+    "project_id": "com-serviceconnect",
+    "storage_bucket": "com-serviceconnect.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:233531602498:android:6402b8971ab3c3b357dfdb",
+        "android_client_info": {
+          "package_name": "com.serviceconnect"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDLSj0ala8XSHaFSA1eQjxvSyzzIJWRX6Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

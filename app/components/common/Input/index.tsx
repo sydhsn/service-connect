@@ -1,59 +1,87 @@
-import React from 'react';
-import {KeyboardTypeOptions} from 'react-native';
-import {View, TextInput, StyleSheet} from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import React, {useState} from 'react';
+import {TextInputProps} from 'react-native';
+import {View, Text, TextInput, StyleSheet} from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {COLORS} from '../../../constants';
 
-interface InputTextProps {
-  placeholder: string;
-  icon: string;
-  secureTextEntry?: boolean;
-  keyboardType?: KeyboardTypeOptions;
+interface InputProps extends TextInputProps {
+  label: string;
+  iconName: string;
+  error?: string;
+  password?: boolean;
+  onFocus?: () => void;
 }
 
-const Input: React.FC<InputTextProps> = ({
-  placeholder,
-  icon,
-  secureTextEntry,
-  keyboardType,
+const Input: React.FC<InputProps> = ({
+  label,
+  iconName,
+  error,
+  password,
+  onFocus = () => {},
+  ...props
 }) => {
+  const [hidePassword, setHidePassword] = useState<boolean>(!!password);
+  const [isFocused, setIsFocused] = useState<boolean>(false);
+
   return (
-    <View style={styles.container}>
-      <View style={styles.inputContainer}>
-        <Icon name={icon} size={20} style={styles.icon} />
-        <TextInput
-          placeholder={placeholder}
-          style={styles.input}
-          secureTextEntry={secureTextEntry}
-          keyboardAppearance="default"
-          keyboardType={keyboardType}
+    <View style={{marginBottom: 20}}>
+      <Text style={style.label}>{label}</Text>
+      <View
+        style={[
+          style.inputContainer,
+          {
+            borderColor: error
+              ? COLORS.red
+              : isFocused
+              ? COLORS.darkBlue
+              : COLORS.light,
+            alignItems: 'center',
+          },
+        ]}>
+        <Icon
+          name={iconName}
+          style={{color: COLORS.darkBlue, fontSize: 22, marginRight: 10}}
         />
+        <TextInput
+          autoCorrect={false}
+          onFocus={() => {
+            onFocus();
+            setIsFocused(true);
+          }}
+          onBlur={() => setIsFocused(false)}
+          secureTextEntry={hidePassword}
+          style={{color: COLORS.darkBlue, flex: 1}}
+          {...props}
+        />
+        {password && (
+          <Icon
+            onPress={() => setHidePassword(!hidePassword)}
+            name={hidePassword ? 'eye-outline' : 'eye-off-outline'}
+            style={{color: COLORS.darkBlue, fontSize: 22}}
+          />
+        )}
       </View>
+      {error && (
+        <Text style={{marginTop: 7, color: COLORS.red, fontSize: 12}}>
+          {error}
+        </Text>
+      )}
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: 10,
-    width: '100%',
-    maxWidth: 300,
+const style = StyleSheet.create({
+  label: {
+    marginVertical: 5,
+    fontSize: 14,
+    color: COLORS.grey,
   },
   inputContainer: {
+    height: 55,
+    backgroundColor: COLORS.light,
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    paddingHorizontal: 10,
-  },
-  icon: {
-    marginRight: 10,
-  },
-  input: {
-    flex: 1,
-    paddingVertical: 10,
-    fontSize: 16,
+    paddingHorizontal: 15,
+    borderWidth: 0.5,
   },
 });
 
