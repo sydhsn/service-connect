@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
-import {SafeAreaView, Text, View} from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {Image, SafeAreaView, Text, View} from 'react-native';
 import Button from '../components/common/Button';
+import auth from '@react-native-firebase/auth';
 
 interface UserDetails {
   email: string;
@@ -16,24 +16,10 @@ interface Props {
 
 const HomeScreen: React.FC<Props> = ({navigation}) => {
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
-
-  useEffect(() => {
-    getUserData();
-  }, []);
-
-  const getUserData = async () => {
-    const userData = await AsyncStorage.getItem('userData');
-    if (userData) {
-      setUserDetails(JSON.parse(userData));
-    }
-  };
+  const currentUser = auth().currentUser;
 
   const logout = () => {
     if (userDetails) {
-      AsyncStorage.setItem(
-        'userData',
-        JSON.stringify({...userDetails, loggedIn: false}),
-      );
     }
     navigation.navigate('Login');
   };
@@ -46,9 +32,21 @@ const HomeScreen: React.FC<Props> = ({navigation}) => {
         justifyContent: 'center',
         paddingHorizontal: 40,
       }}>
-      <Text style={{fontSize: 20, fontWeight: 'bold'}}>
-        Welcome {JSON.stringify(userDetails)}
-      </Text>
+      <View>
+        {currentUser ? (
+          <>
+            <Text>Welcome, {currentUser.displayName}</Text>
+            {currentUser.photoURL && (
+              <Image
+                source={{uri: currentUser.photoURL}}
+                style={{width: 100, height: 100}}
+              />
+            )}
+          </>
+        ) : (
+          <Text>Loading...</Text>
+        )}
+      </View>
       <Button title="Logout" onPress={logout} />
     </SafeAreaView>
   );

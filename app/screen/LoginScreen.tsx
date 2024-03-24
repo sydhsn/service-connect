@@ -5,7 +5,6 @@ import Input from '../components/common/Input';
 import Button from '../components/common/Button';
 import Loader from '../components/common/Loader';
 import auth from '@react-native-firebase/auth';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface UserData {
   email: string;
@@ -48,10 +47,6 @@ const LoginScreen: React.FC<{navigation: any}> = ({navigation}) => {
       setLoading(false);
       try {
         await auth().signInWithEmailAndPassword(inputs.email, inputs.password);
-        AsyncStorage.setItem(
-          'userData',
-          JSON.stringify({...inputs, loggedIn: true}),
-        );
         navigation.navigate('Home');
       } catch (err: any) {
         Alert.alert('Error', err.message);

@@ -1,13 +1,11 @@
 import React, {useState} from 'react';
 import {View, Text, ScrollView, Alert, Keyboard} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {COLORS} from '../constants';
 import Input from '../components/common/Input';
 import Loader from '../components/common/Loader';
 import Button from '../components/common/Button';
 import auth from '@react-native-firebase/auth';
-import database from '@react-native-firebase/database';
 
 interface Inputs {
   email: string;
@@ -35,63 +33,74 @@ const RegisterScreen: React.FC<{navigation: any}> = ({navigation}) => {
 
   const validate = () => {
     Keyboard.dismiss();
-    let isValid = true;
-
-    if (!inputs.email) {
-      handleError('Please input email', 'email');
-      isValid = false;
-    } else if (!inputs.email.match(/\S+@\S+\.\S+/)) {
-      handleError('Please input a valid email', 'email');
-      isValid = false;
+    const validations = [
+      {field: 'email', message: 'Please input email', condition: !inputs.email},
+      {
+        field: 'email',
+        message: 'Please input a valid email',
+        condition: !/\S+@\S+\.\S+/.test(inputs.email),
+      },
+      {
+        field: 'fullname',
+        message: 'Please input fullname',
+        condition: !inputs.fullname,
+      },
+      {
+        field: 'phone',
+        message: 'Please input phone number',
+        condition: !inputs.phone,
+      },
+      {
+        field: 'password',
+        message: 'Please input password',
+        condition: !inputs.password,
+      },
+      {
+        field: 'password',
+        message: 'Min password length of 5',
+        condition: inputs.password.length < 5,
+      },
+    ];
+    const invalidFields = validations.filter(({condition}) => condition);
+    if (invalidFields.length > 0) {
+      invalidFields.forEach(({message, field}) => {
+        handleError(message, field);
+      });
+      return;
     }
 
-    if (!inputs.fullname) {
-      handleError('Please input fullname', 'fullname');
-      isValid = false;
-    }
-
-    if (!inputs.phone) {
-      handleError('Please input phone number', 'phone');
-      isValid = false;
-    }
-
-    if (!inputs.password) {
-      handleError('Please input password', 'password');
-      isValid = false;
-    } else if (inputs.password.length < 5) {
-      handleError('Min password length of 5', 'password');
-      isValid = false;
-    }
-
-    if (isValid) {
-      register();
-    }
+    register();
   };
 
-  const register = () => {
+  const register = async () => {
     setLoading(true);
-    setTimeout(async () => {
-      try {
-        const {user} = await auth().createUserWithEmailAndPassword(
-          inputs.email,
-          inputs.password,
-        );
-        console.log('user', user);
-        if (user) {
-          await database().ref(`/users/${user.uid}`).set({
-            email: inputs.email,
-            fullname: inputs.fullname,
-            phone: inputs.phone,
+    try {
+      await auth()
+        .createUserWithEmailAndPassword(inputs.email, inputs.password)
+        .then(() => {
+          const user = auth().currentUser;
+          return user?.updateProfile({
+            displayName: inputs.fullname,
+            photoURL: 'https://my-cdn.com/assets/user/123.png',
           });
-          AsyncStorage.setItem('userData', JSON.stringify(inputs));
-          setLoading(false);
-          navigation.navigate('LoginScreen');
-        }
-      } catch (err: any) {
-        setLoading(false);
-        Alert.alert('Error', err?.message);
-      }
-    }, 3000);
+        })
+        .then(() => {
+          auth().onAuthStateChanged(user => {
+            if (user) {
+              console.log('user', user);
+              navigation.navigate('Login');
+            } else {
+              console.log('error');
+            }
+          });
+        })
+        .catch(e => {
+          console.log(e.code, e.message);
+        });
+    } catch (error: any) {
+      setLoading(false);
+      Alert.alert('Error', error?.message);
+    }
   };
 
   const handleOnchange = (text: string, input: string) => {
