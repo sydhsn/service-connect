@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Image, SafeAreaView, Text, View} from 'react-native';
+import {Alert, Image, SafeAreaView, Text, View} from 'react-native';
 import Button from '../components/common/Button';
 import auth from '@react-native-firebase/auth';
 
@@ -11,18 +11,29 @@ interface UserDetails {
 }
 
 interface Props {
-  navigation: any; // Adjust type according to your navigation library
+  navigation: any;
+  route?: any;
 }
 
-const HomeScreen: React.FC<Props> = ({navigation}) => {
+const HomeScreen: React.FC<Props> = ({navigation, route}) => {
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(route.params?.loggedIn);
   const currentUser = auth().currentUser;
+  const {loggedIn} = route.params;
 
-  const logout = () => {
-    if (userDetails) {
+  const logout = async () => {
+    if (currentUser) {
+      await auth().signOut();
+      setIsLoggedIn((prevState: any) => ({
+        ...prevState,
+        isLoggedIn: false,
+      }));
+      navigation.navigate('Login');
     }
-    navigation.navigate('Login');
   };
+
+  console.log('loggedIn', loggedIn);
+  console.log('route.params', route.params);
 
   return (
     <SafeAreaView
@@ -35,13 +46,10 @@ const HomeScreen: React.FC<Props> = ({navigation}) => {
       <View>
         {currentUser ? (
           <>
-            <Text>Welcome, {currentUser.displayName}</Text>
-            {currentUser.photoURL && (
-              <Image
-                source={{uri: currentUser.photoURL}}
-                style={{width: 100, height: 100}}
-              />
-            )}
+            <Text>Welcome, {currentUser.displayName}!</Text>
+            <Text>
+              {isLoggedIn ? 'User is logged in' : 'User is not logged in'}
+            </Text>
           </>
         ) : (
           <Text>Loading...</Text>

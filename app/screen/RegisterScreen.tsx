@@ -6,12 +6,14 @@ import Input from '../components/common/Input';
 import Loader from '../components/common/Loader';
 import Button from '../components/common/Button';
 import auth from '@react-native-firebase/auth';
+import database from '@react-native-firebase/database';
 
 interface Inputs {
   email: string;
   fullname: string;
   phone: string;
   password: string;
+  photoURL?: string;
 }
 
 interface Errors {
@@ -27,6 +29,7 @@ const RegisterScreen: React.FC<{navigation: any}> = ({navigation}) => {
     fullname: '',
     phone: '',
     password: '',
+    photoURL: 'https://my-cdn.com/assets/user/123.png',
   });
   const [errors, setErrors] = useState<Errors>({});
   const [loading, setLoading] = useState<boolean>(false);
@@ -68,7 +71,6 @@ const RegisterScreen: React.FC<{navigation: any}> = ({navigation}) => {
       });
       return;
     }
-
     register();
   };
 
@@ -81,13 +83,16 @@ const RegisterScreen: React.FC<{navigation: any}> = ({navigation}) => {
           const user = auth().currentUser;
           return user?.updateProfile({
             displayName: inputs.fullname,
-            photoURL: 'https://my-cdn.com/assets/user/123.png',
+            photoURL: inputs.photoURL,
           });
         })
         .then(() => {
-          auth().onAuthStateChanged(user => {
+          auth().onAuthStateChanged(async user => {
             if (user) {
-              console.log('user', user);
+              await saveUserData(user.uid, {
+                ...inputs,
+              });
+              Alert.alert('Success', 'User registered successfully');
               navigation.navigate('Login');
             } else {
               console.log('error');
@@ -100,6 +105,16 @@ const RegisterScreen: React.FC<{navigation: any}> = ({navigation}) => {
     } catch (error: any) {
       setLoading(false);
       Alert.alert('Error', error?.message);
+    }
+  };
+
+  // Function to save user data to Firebase Database
+  const saveUserData = async (userId: string, userData: Inputs) => {
+    try {
+      await database().ref(`users/${userId}`).set(userData);
+    } catch (error: any) {
+      Alert.alert('Error', error?.message);
+      throw error;
     }
   };
 

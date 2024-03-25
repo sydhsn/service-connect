@@ -1,5 +1,12 @@
 import React, {useState} from 'react';
-import {View, Text, Alert, Keyboard, SafeAreaView} from 'react-native';
+import {
+  View,
+  Text,
+  Alert,
+  Keyboard,
+  SafeAreaView,
+  ScrollView,
+} from 'react-native';
 import {COLORS} from '../constants';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
@@ -9,7 +16,6 @@ import auth from '@react-native-firebase/auth';
 interface UserData {
   email: string;
   password: string;
-  loggedIn: boolean;
 }
 
 interface InputErrors {
@@ -18,7 +24,7 @@ interface InputErrors {
 }
 
 const LoginScreen: React.FC<{navigation: any}> = ({navigation}) => {
-  const [inputs, setInputs] = useState<{email: string; password: string}>({
+  const [inputs, setInputs] = useState<UserData>({
     email: '',
     password: '',
   });
@@ -47,7 +53,8 @@ const LoginScreen: React.FC<{navigation: any}> = ({navigation}) => {
       setLoading(false);
       try {
         await auth().signInWithEmailAndPassword(inputs.email, inputs.password);
-        navigation.navigate('Home');
+        Alert.alert('Success', 'Login Successfull');
+        navigation.navigate('Home', {loggedIn: true});
       } catch (err: any) {
         Alert.alert('Error', err.message);
       }
@@ -65,44 +72,47 @@ const LoginScreen: React.FC<{navigation: any}> = ({navigation}) => {
   return (
     <SafeAreaView style={{backgroundColor: COLORS.white, flex: 1}}>
       <Loader visible={loading} />
-      <View style={{paddingTop: 50, paddingHorizontal: 20}}>
-        <Text style={{color: COLORS.black, fontSize: 40, fontWeight: 'bold'}}>
-          Log In
-        </Text>
-        <Text style={{color: COLORS.grey, fontSize: 18, marginVertical: 10}}>
-          Enter Your Details to Login
-        </Text>
-        <View style={{marginVertical: 20}}>
-          <Input
-            onChangeText={text => handleOnchange(text, 'email')}
-            onFocus={() => handleError(null, 'email')}
-            iconName="email-outline"
-            label="Email"
-            placeholder="Enter your email address"
-            error={errors.email}
-          />
-          <Input
-            onChangeText={text => handleOnchange(text, 'password')}
-            onFocus={() => handleError(null, 'password')}
-            iconName="lock-outline"
-            label="Password"
-            placeholder="Enter your password"
-            error={errors.password}
-            password
-          />
-          <Button title="Log In" onPress={validate} />
-          <Text
-            onPress={() => navigation.navigate('Register')}
-            style={{
-              color: COLORS.black,
-              fontWeight: 'bold',
-              textAlign: 'center',
-              fontSize: 16,
-            }}>
-            Don't have account ?Register
+      <ScrollView
+        contentContainerStyle={{paddingTop: 50, paddingHorizontal: 20}}>
+        <View style={{paddingTop: 50, paddingHorizontal: 20}}>
+          <Text style={{color: COLORS.black, fontSize: 40, fontWeight: 'bold'}}>
+            Log In
           </Text>
+          <Text style={{color: COLORS.grey, fontSize: 18, marginVertical: 10}}>
+            Enter Your Details to Login
+          </Text>
+          <View style={{marginVertical: 20}}>
+            <Input
+              onChangeText={text => handleOnchange(text, 'email')}
+              onFocus={() => handleError(null, 'email')}
+              iconName="email-outline"
+              label="Email"
+              placeholder="Enter your email address"
+              error={errors.email}
+            />
+            <Input
+              onChangeText={text => handleOnchange(text, 'password')}
+              onFocus={() => handleError(null, 'password')}
+              iconName="lock-outline"
+              label="Password"
+              placeholder="Enter your password"
+              error={errors.password}
+              password
+            />
+            <Button title="Log In" onPress={validate} />
+            <Text
+              onPress={() => navigation.navigate('Register')}
+              style={{
+                color: COLORS.black,
+                fontWeight: 'bold',
+                textAlign: 'center',
+                fontSize: 16,
+              }}>
+              Don't have account ?Register
+            </Text>
+          </View>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
